@@ -1,0 +1,3 @@
+[submodule "brats"]
+	path = brats
+	url = https://github.com/gama-ufsc/brats
