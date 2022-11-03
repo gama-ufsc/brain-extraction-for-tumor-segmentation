@@ -1,3 +1,6 @@
 [submodule "brats"]
 	path = brats
 	url = https://github.com/gama-ufsc/brats
+[submodule "nnunet"]
+	path = nnunet
+	url = https://github.com/gama-ufsc/nnunet
