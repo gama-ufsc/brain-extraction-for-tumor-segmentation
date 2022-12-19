@@ -3,6 +3,7 @@
 """
 import os
 import pandas as pd
+import pickle
 
 from batchgenerators.utilities.file_and_folder_operations import *
 from collections import OrderedDict
@@ -38,21 +39,27 @@ def build_nnunet_nobet(seg_list, data_dir, task_name):
     target_imagesTs.mkdir(exist_ok=True)
     target_labelsTr.mkdir(exist_ok=True)
 
+    print('loading metadta')
+    with open(data_dir/'train_val_metadata_df.pkl', 'rb') as f:
+        metadata = pickle.load(f)
+
+    brats_ids = pd.read_csv(data_dir/'MICCAI_BraTS2020_TrainingData/name_mapping.csv').dropna(axis=0, subset=['TCGA_TCIA_subject_ID']).set_index('TCGA_TCIA_subject_ID')['BraTS_2020_subject_ID']
+
     print('creating segmentation files and linking mri images')
     for seg_fpath in seg_list:
         dcm_mod = seg_fpath.parent.name
         sid = seg_fpath.parent.parent.name
         mod = dcm_mod.split('Glioma')[0][len('300.000000-'):][:-1]
 
-        ref_fpath = next(data_dir.glob(f'raw/TCGA/*/Pre*/{sid}/*t1*'))
+        ref_fpath = next(data_dir.glob(f'TCGA/*/Pre*/{sid}/*t1*'))
 
-        # TODO: WIP
-        mod_img_metadata = segs_tcga_series[sid][dcm_mod]
+        mod_img_metadata = metadata.loc[sid,dcm_mod]
         mod_label = mod_img_metadata['Modality']
-        mod_dcm_dir = Path(mod_img_metadata['Filepath'])
+        mod_dcm_dir = data_dir/mod_img_metadata['Filepath']
 
         brats_id = brats_ids.loc[sid]
 
+        # TODO: WIP
         seg_dst_fpath = dst_dir/f"{brats_id}_{mod_label.lower()}_seg.nii.gz"
         mod_dst_fpath = dst_dir/f"{brats_id}_{mod_label.lower()}.nii.gz"
         if not seg_dst_fpath.exists():
