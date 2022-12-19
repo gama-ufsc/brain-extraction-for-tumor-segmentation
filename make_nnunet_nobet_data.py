@@ -2,15 +2,21 @@
 """Builds nnunet dataset with DICOM-Glioma-Seg images.
 """
 import os
-import pandas as pd
 import pickle
+import shutil
+
+import nibabel as nib
+import pandas as pd
+import SimpleITK as sitk
 
 from batchgenerators.utilities.file_and_folder_operations import *
 from collections import OrderedDict
 from dotenv import find_dotenv, load_dotenv
+from nipype.interfaces.fsl import Reorient2Std
 from pathlib import Path
 
-from brats.nnunet.datasets import make_nnunet_dataset
+from brats.nnunet.datasets import copy_BraTS_segmentation_and_convert_labels
+from brats.utils import dcm2nifti
 
 
 def build_nnunet_nobet(seg_list, data_dir, task_name):
@@ -39,13 +45,25 @@ def build_nnunet_nobet(seg_list, data_dir, task_name):
     target_imagesTs.mkdir(exist_ok=True)
     target_labelsTr.mkdir(exist_ok=True)
 
+    tmpdir = Path('.tmpdir')
+    tmpdir.mkdir(exist_ok=True)
+
     print('loading metadta')
     with open(data_dir/'train_val_metadata_df.pkl', 'rb') as f:
         metadata = pickle.load(f)
 
     brats_ids = pd.read_csv(data_dir/'MICCAI_BraTS2020_TrainingData/name_mapping.csv').dropna(axis=0, subset=['TCGA_TCIA_subject_ID']).set_index('TCGA_TCIA_subject_ID')['BraTS_2020_subject_ID']
 
+    mod_num = {
+        'flair': '0000',
+        't1': '0001',
+        't1ce': '0002',
+        't2': '0003',
+    }
+
     print('creating segmentation files and linking mri images')
+    patient_names = list()
+
     for seg_fpath in seg_list:
         dcm_mod = seg_fpath.parent.name
         sid = seg_fpath.parent.parent.name
@@ -60,10 +78,10 @@ def build_nnunet_nobet(seg_list, data_dir, task_name):
         brats_id = brats_ids.loc[sid]
 
         # TODO: WIP
-        seg_dst_fpath = dst_dir/f"{brats_id}_{mod_label.lower()}_seg.nii.gz"
-        mod_dst_fpath = dst_dir/f"{brats_id}_{mod_label.lower()}.nii.gz"
-        if not seg_dst_fpath.exists():
-            mod_fpath = dcm2nifti(mod_dcm_dir, '.tmpdir')
+        seg_dst_fpath = target_labelsTr/f"{brats_id}.nii.gz"
+        mod_dst_fpath = target_imagesTr/f"{brats_id}_{mod_num[mod_label.lower()]}.nii.gz"
+        if not mod_dst_fpath.exists():
+            mod_fpath = dcm2nifti(mod_dcm_dir, tmpdir)
 
             mod_id = mod_dcm_dir.name.split('-')[-1]
 
@@ -167,12 +185,15 @@ def build_nnunet_nobet(seg_list, data_dir, task_name):
                 nib.save(fixed_mod, mod_fpath)
                 mod_fpath = Path(mod_fpath)
 
+            # make seg labels continuous
+            seg_tmp_fpath = tmpdir/('converted_'+seg_fpath.name)
+            copy_BraTS_segmentation_and_convert_labels(str(seg_fpath), str(seg_tmp_fpath))
 
-        #     transform_fpath = next(metadata_dir.glob(f"*/{sid}/Registration_Transforms/*{mod.replace('_','__')}*.txt"))
-            transform_fpath = next(metadata_dir.glob(f"*/{sid}/Registration_Transforms/*{mod_id}.txt"))
+            # transform processed images back to original orientation and spacing
+            transform_fpath = next((data_dir/'DICOM_Glioma_SEG_Metadata').glob(f"*/{sid}/Registration_Transforms/*{mod_id}.txt"))
 
             mod_img = sitk.ReadImage(str(mod_fpath), imageIO="NiftiImageIO")
-            seg_img = sitk.ReadImage(str(seg_fpath), imageIO="NiftiImageIO")
+            seg_img = sitk.ReadImage(str(seg_tmp_fpath), imageIO="NiftiImageIO")
             ref_img = sitk.ReadImage(str(ref_fpath), imageIO="NiftiImageIO")
 
             transform = sitk.ReadTransform(str(transform_fpath))
@@ -180,38 +201,41 @@ def build_nnunet_nobet(seg_list, data_dir, task_name):
             transf_mod_img = sitk.Resample(mod_img, referenceImage=ref_img, transform=transform.GetInverse())
             transf_seg_img = sitk.Resample(seg_img, referenceImage=ref_img, transform=transform.GetInverse())
 
-            mod_tmp_fpath = '.tmpdir/mod.nii.gz'
-            sitk.WriteImage(transf_mod_img, mod_tmp_fpath)
+            mod_tmp_fpath = tmpdir/'mod.nii.gz'
+            sitk.WriteImage(transf_mod_img, str(mod_tmp_fpath))
 
+            # reorient and save images
             reor = Reorient2Std()
 
             reor.inputs.in_file = mod_tmp_fpath
             reor.inputs.out_file = str(mod_dst_fpath)
 
-            res = reor.run()
+            _ = reor.run()
 
-            seg_tmp_fpath = '.tmpdir/seg.nii.gz'
-            sitk.WriteImage(transf_seg_img, seg_tmp_fpath)
+            if not seg_dst_fpath.exists():
+                patient_names.append(brats_id)
 
-            reor = Reorient2Std()
+                seg_tmp_fpath = tmpdir/'seg.nii.gz'
+                sitk.WriteImage(transf_seg_img, str(seg_tmp_fpath))
 
-            reor.inputs.in_file = seg_tmp_fpath
-            reor.inputs.out_file = str(seg_dst_fpath)
+                reor = Reorient2Std()
 
-            res = reor.run()
-            
-            # TODO: !rm {mod_tmp_fpath}
-            # TODO: !rm {seg_tmp_fpath}
+                reor.inputs.in_file = seg_tmp_fpath
+                reor.inputs.out_file = str(seg_dst_fpath)
 
-    patient_names = None  # TODO
+                _ = reor.run()
+
+            # clear temporary files
+            shutil.rmtree(tmpdir, ignore_errors=True)
+            tmpdir.mkdir(exist_ok=True)
 
     print('creating dataset json')
     json_dict = OrderedDict()
-    json_dict['name'] = "BraTS2020"
+    json_dict['name'] = task_name.lstrip('Task')
     json_dict['description'] = "nothing"
     json_dict['tensorImageSize'] = "4D"
-    json_dict['reference'] = "see BraTS2020"
-    json_dict['licence'] = "see BraTS2020 license"
+    json_dict['reference'] = "see TCGA"
+    json_dict['licence'] = "see TCGA license"
     json_dict['release'] = "0.0"
     json_dict['modality'] = {
         "0": "FLAIR",
