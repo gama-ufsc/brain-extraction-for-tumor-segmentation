@@ -9,7 +9,7 @@ Instructions:
 1. [Install FSL](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation/Linux)
 1. Install nnU-Net and the brats submodules (already in the repo)
 1. Unzip BraTS2020 training data into `data/raw/MICCAI_BraTS2020_TrainingData`
-1. Put TCGA images in `data/raw/TCGA` (see below for more details on how TCGA data must be structured) and DICOM-Glioma-SEG in `data/raw/DICOM-Glioma-SEG`
+1. Put TCGA images in `data/raw/TCGA` (see below for more details on how TCGA data must be structured) and DICOM-Glioma-SEG in `data/raw/DICOM-Glioma-SEG` (and DICOM_Glioma_SEG_Metadata in `data/raw/DICOM_Glioma_SEG_Metadata`)
 
 
 ### TCGA data
