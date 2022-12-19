@@ -3,13 +3,13 @@ import os
 from pathlib import Path
 
 from dotenv import find_dotenv, load_dotenv
+load_dotenv(find_dotenv())  # this has to be done before importing from nnunet
+
 from nnunet.run.default_configuration import get_default_configuration
 from nnunet.training.network_training.nnUNetTrainerV2 import nnUNetTrainerV2
 
 
 if __name__ == '__main__':
-    load_dotenv(find_dotenv())
-
     nnUNet_preprocessed = Path(os.environ['nnUNet_preprocessed'])
     results_dir = Path(os.environ['RESULTS_FOLDER'])
 

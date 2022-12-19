@@ -4,8 +4,10 @@ from joblib import cpu_count
 from pathlib import Path
 from shutil import copy
 
-from batchgenerators.utilities.file_and_folder_operations import load_json
 from dotenv import find_dotenv, load_dotenv
+load_dotenv(find_dotenv())  # this has to be done before importing from nnunet
+
+from batchgenerators.utilities.file_and_folder_operations import load_json
 from nnunet.experiment_planning.DatasetAnalyzer import DatasetAnalyzer
 from nnunet.experiment_planning.experiment_planner_baseline_2DUNet_v21 import ExperimentPlanner2D_v21
 from nnunet.experiment_planning.experiment_planner_baseline_3DUNet_v21 import ExperimentPlanner3D_v21
@@ -14,7 +16,6 @@ from nnunet.preprocessing.sanity_checks import verify_dataset_integrity
 
 
 if __name__ == '__main__':
-    load_dotenv(find_dotenv())
 
     nnUNet_preprocessed = Path(os.environ['nnUNet_preprocessed'])
     nnUNet_raw_data = Path(os.environ['nnUNet_raw_data_base'])/'nnUNet_raw_data'
@@ -48,9 +49,9 @@ if __name__ == '__main__':
         copy(cropped_task_dir/'dataset_properties.pkl', preprocessed_task_dir)
         copy(task_dir/'dataset.json', preprocessed_task_dir)
 
-        # planner3d = ExperimentPlanner3D_v21(str(cropped_task_dir), str(preprocessed_task_dir))
-        # planner3d.plan_experiment()
-        # planner3d.run_preprocessing((n_threads, n_threads))
+        planner3d = ExperimentPlanner3D_v21(str(cropped_task_dir), str(preprocessed_task_dir))
+        planner3d.plan_experiment()
+        planner3d.run_preprocessing((n_threads, n_threads))
 
         planner2d = ExperimentPlanner2D_v21(str(cropped_task_dir), str(preprocessed_task_dir))
         planner2d.plan_experiment()
