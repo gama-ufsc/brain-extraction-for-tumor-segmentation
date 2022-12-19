@@ -44,7 +44,7 @@ def build_nnunet_raw_brats(img_list, task_name):
 
     print('creating dataset json')
     json_dict = OrderedDict()
-    json_dict['name'] = "BraTS2020"
+    json_dict['name'] = task_name[8:]
     json_dict['description'] = "nothing"
     json_dict['tensorImageSize'] = "4D"
     json_dict['reference'] = "see BraTS2020"
@@ -84,4 +84,4 @@ if __name__ == '__main__':
     tcga_img_dirs = [img for img in brats_img_dirs
                      if img.name in brats_tcga_names['BraTS_2020_subject_ID'].values]
 
-    build_nnunet_raw_brats(tcga_img_dirs, task_name='Task107_TCGA_bet')
+    build_nnunet_raw_brats(tcga_img_dirs, task_name='Task107_TCGA_manual')

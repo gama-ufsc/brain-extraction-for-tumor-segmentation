@@ -231,7 +231,7 @@ def build_nnunet_nobet(seg_list, data_dir, task_name):
 
     print('creating dataset json')
     json_dict = OrderedDict()
-    json_dict['name'] = task_name.lstrip('Task')
+    json_dict['name'] = task_name[8:]
     json_dict['description'] = "nothing"
     json_dict['tensorImageSize'] = "4D"
     json_dict['reference'] = "see TCGA"
@@ -263,4 +263,4 @@ if __name__ == '__main__':
     data_dir = Path(project_dir, 'data', 'raw')
 
     seg_list = list((data_dir/'DICOM-Glioma-SEG').glob('**/seg.nii.gz'))
-    build_nnunet_nobet(seg_list, data_dir, task_name='Task108_TCGA_DICOM_nobet')
+    build_nnunet_nobet(seg_list, data_dir, task_name='Task108_TCGA_DICOM_nobe')
