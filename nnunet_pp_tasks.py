@@ -24,7 +24,7 @@ if __name__ == '__main__':
 
     n_threads = int(cpu_count() / 2)
 
-    for task_name in ['Task102_BraTS2020', 'Task107_TCGA_bet', 'Task108_TCGA_DICOM_nobet']:
+    for task_name in ['Task102_BraTS2020', 'Task107_TCGA_manual', 'Task108_TCGA_nobe',]:
         # things here are a frozen version of what happens through nnUNet_plan_and_preprocess
 
         task_dir = nnUNet_raw_data/task_name

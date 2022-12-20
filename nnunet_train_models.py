@@ -13,8 +13,7 @@ if __name__ == '__main__':
     nnUNet_preprocessed = Path(os.environ['nnUNet_preprocessed'])
     results_dir = Path(os.environ['RESULTS_FOLDER'])
 
-    # for task_name in ['Task102_BraTS2020', 'Task107_TCGA_bet', 'Task108_TCGA_DICOM_nobet']:
-    for task_name in ['Task102_BraTS2020',]:
+    for task_name in ['Task102_BraTS2020', 'Task107_TCGA_manual', 'Task108_TCGA_DICOM_nobe']:
         plans_file, output_folder_name, dataset_directory, batch_dice, stage, \
         trainer_class = get_default_configuration('2d', task_name,
                                                   'nnUNetTrainerV2',
@@ -31,7 +30,7 @@ if __name__ == '__main__':
             deterministic=False,
             fp16=True
         )
-        trainer.max_num_epochs = 150
+        trainer.max_num_epochs = 15
         trainer.initialize(True)
 
         # TODO: implement continued training
