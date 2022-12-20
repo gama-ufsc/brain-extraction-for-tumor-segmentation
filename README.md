@@ -7,9 +7,12 @@ Accompanying the paper "Towards fully automated deep-learning-based brain tumor 
 Instructions:
 
 1. [Install FSL](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation/Linux)
+1. [Install CaPTk](https://cbica.github.io/CaPTk/Download.html)
+1. [Install HD-BET](https://github.com/MIC-DKFZ/HD-BET)
 1. Install nnU-Net and the brats submodules (already in the repo)
 1. Unzip BraTS2020 training data into `data/raw/MICCAI_BraTS2020_TrainingData`
 1. Put TCGA images in `data/raw/TCGA` (see below for more details on how TCGA data must be structured) and DICOM-Glioma-SEG in `data/raw/DICOM-Glioma-SEG` (and DICOM_Glioma_SEG_Metadata in `data/raw/DICOM_Glioma_SEG_Metadata`)
+1. Download the non-skull-stripped T1-weighted image of the [SRI24 atlas](https://www.nitrc.org/projects/sri24/) into `data/raw/SRI24_T1.nii`
 
 
 ### TCGA data
