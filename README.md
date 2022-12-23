@@ -31,7 +31,7 @@ See the template for such in `make_test_data.py`, the `apply_XXX` function.
 
 ## Step-by-step
 
-1. Install required packages (`environment.yml`) the two submodules
+1. Install required packages (`environment.yml`) and the two submodules
 1. Run:
  1. `make_dotenv.py` to create a `.env` file with the environment variables required by nnU-Net package
  1. `make_nnunet_brats_task.py` and `make_nnunet_nobe_task.py` to preprocess the training data

@@ -1,0 +1,12 @@
+name: be4brats
+channels:
+  - defaults
+dependencies:
+  - pytorch=1.7.0
+  - torchvision=0.8.1
+  - python-dotenv=0.15
+  - simpleitk=2.0.2
+  - nipype=1.6.0
+  - tqdm=4.47
+  - ipykernel
+  - dcm2niix
