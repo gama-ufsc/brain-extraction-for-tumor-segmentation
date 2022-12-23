@@ -1,12 +1,13 @@
 # Brain Extraction Evaluation for Tumor Segmentation with Deep Learning
 
-Accompanying the paper "Towards fully automated deep-learning-based brain tumor segmentation: is brain extraction still necessary?".
+An evaluation of different brian extraction tools and methods for brain tumor segmentation using deep learning.
+This repository accompanies the paper:
+
+> B. M. Pacheco, G. de Souza e Cassia, and D. Silva, “Towards fully automated deep-learning-based brain tumor segmentation: Is brain extraction still necessary?,” Biomedical Signal Processing and Control, vol. 82, p. 104514, 2023, doi: https://doi.org/10.1016/j.bspc.2022.104514.
 
 ## Requirements
 
-Our preprocessing pipeline is implemented using [FSL](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation/Linux), [CaPTk](https://cbica.github.io/CaPTk/Download.html) and [HD-BET](https://github.com/MIC-DKFZ/HD-BET), as detailed in the paper.
-
-You will also need nnU-Net and our library of useful functions for brain tumor segmentation (brats), which are included as submodules in this repo.
+Our preprocessing pipeline is implemented using [FSL](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation/Linux), [CaPTk](https://cbica.github.io/CaPTk/Download.html) and [HD-BET](https://github.com/MIC-DKFZ/HD-BET), as detailed in the paper. You will also need nnU-Net and our library of useful functions for brain tumor segmentation (brats), which are included as submodules in this repo.
 I recommend that you install both in development mode (`python setup.py develop`) from the submodules, even though everything should work with the nnU-Net package installed from the [main source](https://github.com/MIC-DKFZ/nnUNet) (untested). 
 
 ## Data
