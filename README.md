@@ -29,12 +29,13 @@ As the BE methods require additional instalations, the current implementation ap
 However, this implementation suits any other BE method.
 See the template for such in `make_test_data.py`, the `apply_XXX` function.
 
-## Step-by-step
+## Execution order
 
-1. Install required packages (`environment.yml`) and the two submodules
-1. Run:
- 1. `make_dotenv.py` to create a `.env` file with the environment variables required by nnU-Net package
- 1. `make_nnunet_brats_task.py` and `make_nnunet_nobe_task.py` to preprocess the training data
- 1. `make_test_data.py` to preprocess the test data
- 1. `nnunet_pp_tasks.py` and `nnunet_train_models.py` to train the models
- 1. `nnunet_predict.py` to use the trained models for prediction
+With the required packages (`environment.yml`) and the two submodules installed, run:
+
+1. `make_dotenv.py` to create a `.env` file with the environment variables required by nnU-Net package
+1. `make_nnunet_brats_task.py` and `make_nnunet_nobe_task.py` to preprocess the training data
+1. `make_test_data.py` to preprocess the test data
+1. `nnunet_pp_tasks.py` and `nnunet_train_models.py` to train the models
+1. `nnunet_predict.py` to use the trained models for prediction
+1. `compute_results.py` to generate a `scores.csv` file with Dice and HD95 of each image for all models and BE methods
