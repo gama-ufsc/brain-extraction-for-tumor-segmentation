@@ -78,6 +78,13 @@ if __name__ == '__main__':
     sri24_fpath = data_dir/'raw/SRI24_T1.nii'
     assert sri24_fpath.exists(), f"SRI24 T1 template not found in {sri24_fpath}"
 
+    modality_number = {
+        "flair": "0000",
+        "t1": "0001",
+        "t1ce": "0002",
+        "t2": "0003",
+    }
+
     metadata = pd.read_pickle(data_dir/'raw/test_metadata.pkl')
     assert all(metadata['Filepath'].apply(lambda r: (data_dir/'raw'/r).exists())), (
         "Missing Test set files"
@@ -98,7 +105,7 @@ if __name__ == '__main__':
     metadata = metadata.set_index(['Subject ID', 'Modality'])
     fpaths = metadata.groupby(level=0).apply(lambda df: df.xs(df.name).Filepath.to_dict()).to_dict()
 
-    for tcga_id in list(fpaths.keys())[:10]:  # TODO: remove images limit
+    for tcga_id in list(fpaths.keys())[:5]:  # TODO: remove images limit
         # get fpath of segmentation file
         t1_fpath = fpaths[tcga_id]['T1']
         possible_segs = list(data_dir.glob(f"raw/TCGA/*/Pre*/{tcga_id}/*GlistrBoost*"))
@@ -232,11 +239,9 @@ if __name__ == '__main__':
         for mod, mod_fpath in {'t1': t1_fpath, 't1ce': t1ce_fpath,
                                'flair': flair_fpath, 't2': t2_fpath}.items():
             mod_transforms = [template2brats_transformation, ] + raw2template_transformations[mod]
-            # mod_transforms = raw2template_transformations[mod]
             modalities_registered[mod] = greedy_apply_transforms(
                 str(mod_fpath),
                 str(brats_t1ce_fpath),
-                # '/home/bruno-pacheco/pkg/CaPTk/1.9.0/squashfs-root/usr/data/sri24/atlastImage.nii.gz',
                 str(tmpdir/('brats_'+mod_fpath.name)),
                 mod_transforms,
             )
@@ -259,8 +264,10 @@ if __name__ == '__main__':
         nobe_dir = dst_dir/'X/NoBE'
         nobe_dir.mkdir(exist_ok=True)
 
-        registered_modalities = {m: nobe_dir/f"{tcga_id}_{m}.nii.gz" for m in
-                                 ['t1', 't1ce', 't2', 'flair']}
+        registered_modalities = {
+            m: nobe_dir/f"{tcga_id}_{modality_number[m]}.nii.gz"
+            for m in ['t1', 't1ce', 't2', 'flair']
+        }
         nib.save(t1_image, registered_modalities['t1'])
         nib.save(t1ce_image, registered_modalities['t1ce'])
         nib.save(t2_image, registered_modalities['t2'])
