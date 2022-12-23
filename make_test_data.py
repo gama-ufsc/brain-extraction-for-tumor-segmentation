@@ -1,15 +1,71 @@
 import shutil
 
 from pathlib import Path
+from typing import Dict
 
 import nibabel as nib
 import pandas as pd
 
 from brats.nnunet.datasets import copy_BraTS_segmentation_and_convert_labels
-from brats.preprocessing.preprocessing import PreprocessorHDBET
+from brats.preprocessing.preprocessing import PreprocessorHDBET, apply_mask_match_brats
 from brats.preprocessing.captk_wrappers import greedy_apply_transforms, greedy_registration
+from brats.preprocessing.hdbet_wrapper import hd_bet
+from brats.preprocessing.nipype_wrappers import fsl_bet
 from brats.utils import dcm2nifti
 from nibabel.orientations import aff2axcodes, axcodes2ornt, apply_orientation, inv_ornt_aff
+
+
+def apply_hd_bet_fast(modalities_fpaths: Dict[str,Path], tmpdir: Path):
+    modality_fpath = modalities_fpaths['t1']
+
+    _, brain_mask_fpath = hd_bet(
+        str(modality_fpath),
+        str(tmpdir/(modality_fpath.name.split('_')[0] + '_mask')),
+        mode='fast',
+    )
+
+    return brain_mask_fpath
+
+def apply_hd_bet(modalities_fpaths: Dict[str,Path], tmpdir: Path):
+    modality_fpath = modalities_fpaths['t1']
+
+    _, brain_mask_fpath = hd_bet(
+        str(modality_fpath),
+        str(tmpdir/(modality_fpath.name.split('_')[0] + '_mask')),
+    )
+
+    return brain_mask_fpath
+
+def apply_bet(modalities_fpaths: Dict[str,Path], tmpdir: Path):
+    modality_fpath = modalities_fpaths['t1']
+
+    _, brain_mask_fpath = fsl_bet(
+        str(modality_fpath),
+        str(tmpdir/(modality_fpath.name.split('_')[0] + '_mask')),
+        fast=True,
+    )
+
+    return brain_mask_fpath
+
+def apply_bet_reduced_bias(modalities_fpaths: Dict[str,Path], tmpdir: Path):
+    modality_fpath = modalities_fpaths['t1']
+
+    _, brain_mask_fpath = fsl_bet(
+        str(modality_fpath),
+        str(tmpdir/(modality_fpath.name.split('_')[0] + '_mask')),
+        fast=False,
+    )
+
+    return brain_mask_fpath
+
+def apply_XXX(modalities_fpaths: Dict[str,Path], tmpdir: Path):
+    """You can implement other BE methods following this template.
+    
+    The function must take all modalities as argument, generate a brain mask,
+    store it at `tmpdir` and return the filepath of the mask. Then, add it to
+    the dict of functions to be applied down below in the main.
+    """
+    raise NotImplementedError
 
 
 if __name__ == '__main__':
@@ -203,10 +259,12 @@ if __name__ == '__main__':
         nobe_dir = dst_dir/'X/NoBE'
         nobe_dir.mkdir(exist_ok=True)
 
-        nib.save(t1_image, nobe_dir/f"{tcga_id}_t1.nii.gz")
-        nib.save(t1ce_image, nobe_dir/f"{tcga_id}_t1ce.nii.gz")
-        nib.save(t2_image, nobe_dir/f"{tcga_id}_t2.nii.gz")
-        nib.save(flair_image, nobe_dir/f"{tcga_id}_flair.nii.gz")
+        registered_modalities = {m: nobe_dir/f"{tcga_id}_{m}.nii.gz" for m in
+                                 ['t1', 't1ce', 't2', 'flair']}
+        nib.save(t1_image, registered_modalities['t1'])
+        nib.save(t1ce_image, registered_modalities['t1ce'])
+        nib.save(t2_image, registered_modalities['t2'])
+        nib.save(flair_image, registered_modalities['flair'])
 
         # fix segmentation labels
         fixed_seg_fpath = tmpdir/('fixed_'+seg_fpath.name)
@@ -219,6 +277,31 @@ if __name__ == '__main__':
         seg = fix_affine(seg)
 
         nib.save(seg, dst_dir/'y'/f"{tcga_id}_seg.nii.gz")
+
+        # apply BE methods
+        be_methods = {
+            'HD-BET-fast': apply_hd_bet_fast,
+            'HD-BET': apply_hd_bet,
+            'BET': apply_bet,
+            'BET-reduced-bias': apply_bet_reduced_bias,
+            # INSERT NEW METHOD HERE
+            # 'new-be-method': apply_new_be_method
+        }
+        for be_method, apply_be_method in be_methods.items():
+            brain_mask_fpath = apply_be_method(registered_modalities, tmpdir)
+            brain_mask = nib.load(brain_mask_fpath)
+
+            be_dir = dst_dir/f"X/{be_method}"
+            be_dir.mkdir(exist_ok=True)
+            for modality, modality_fpath in registered_modalities.items():
+                # besides BE, also shifts histogram to match brats images
+                brain_modality_fpath = apply_mask_match_brats(
+                    modality_fpath,
+                    brain_mask_fpath,
+                    tmpdir/'brain_'
+                )
+
+                shutil.move(brain_modality_fpath, be_dir/modality_fpath.name)
 
         # clear temporary files
         shutil.rmtree(tmpdir, ignore_errors=True)
