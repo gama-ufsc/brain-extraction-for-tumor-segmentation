@@ -13,7 +13,7 @@ if __name__ == '__main__':
     nnUNet_preprocessed = Path(os.environ['nnUNet_preprocessed'])
     results_dir = Path(os.environ['RESULTS_FOLDER'])
 
-    for task_name in ['Task102_BraTS2020', 'Task107_TCGA_manual', 'Task108_TCGA_DICOM_nobe']:
+    for task_name in ['Task102_BraTS2020', 'Task107_TCGA_manual', 'Task108_TCGA_nobe']:
         for model in ['2d', '3d_fullres']:
             plans_file, output_folder_name, dataset_directory, batch_dice, stage, \
             trainer_class = get_default_configuration(model, task_name,
