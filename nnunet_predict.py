@@ -1,5 +1,8 @@
 from pathlib import Path
 
+from dotenv import find_dotenv, load_dotenv
+load_dotenv(find_dotenv())  # this has to be done before importing from nnunet
+
 from nnunet.inference.predict import predict_from_folder
 
 
@@ -8,24 +11,18 @@ if __name__ == '__main__':
     data_dir = Path(project_dir, 'data')
     models_dir = project_dir/'models'
 
-    trainer = 'nnUNetTrainerV2'
+    for test_data_dir in data_dir.glob('processed/Test/X/*'):
+        be_method = test_data_dir.name
 
-    be_method = 'NoBE'
+        for model_dir in models_dir.glob('nnUNet/*/*/*'):
+            task = model_dir.parent.name
+            model = model_dir.parent.parent.name
 
-    test_data_dir = data_dir/'processed'/'Test'/'X'/be_method
-    assert test_data_dir.exists()
+            preds_dir = data_dir/'predictions'/task/be_method
+            preds_dir.mkdir(parents=True, exist_ok=True)
 
-    model = '2d'
-    task = 'Task102_BraTS2020'
-
-    model_dir = models_dir/'nnUNet'/model/task/'nnUNetTrainerV2__nnUNetPlansv2.1'
-    assert model_dir.exists()
-
-    preds_dir = data_dir/'predictions'/task/be_method
-    preds_dir.mkdir(parents=True, exist_ok=True)
-
-    predict_from_folder(str(model_dir), str(test_data_dir), str(preds_dir),
-                        'all', False, 6, 2, None, 0, 1, True,
-                        overwrite_existing=True, mode='normal',
-                        overwrite_all_in_gpu=None, mixed_precision=True,
-                        step_size=.5, checkpoint_name='model_final_checkpoint',)
+            predict_from_folder(str(model_dir), str(test_data_dir),
+                                str(preds_dir), 'all', False, 6, 2, None, 0, 1,
+                                True, overwrite_existing=True, mode='normal',
+                                overwrite_all_in_gpu=None, mixed_precision=True,
+                                step_size=.5, checkpoint_name='model_final_checkpoint',)
