@@ -18,7 +18,7 @@ if __name__ == '__main__':
             task = model_dir.parent.name
             model = model_dir.parent.parent.name
 
-            preds_dir = data_dir/'predictions'/task/be_method
+            preds_dir = data_dir/'predictions'/task/model/be_method
             preds_dir.mkdir(parents=True, exist_ok=True)
 
             predict_from_folder(str(model_dir), str(test_data_dir),
